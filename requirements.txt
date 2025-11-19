@@ -1,0 +1,6 @@
+PySide6
+pyttsx3
+SpeechRecognition
+pyaudio
+python-dotenv
+google-generativeai
