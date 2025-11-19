@@ -5,7 +5,7 @@ from tts_engine import TTSEngine
 from stt_engine import STTEngine
 from assistant_core import AuraAssistant
 from gui import AuraWindow
-
+import pyttsx3
 
 def main():
     app = QApplication(sys.argv)

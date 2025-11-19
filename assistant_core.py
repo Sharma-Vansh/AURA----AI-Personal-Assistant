@@ -1,6 +1,7 @@
 import os
 from dotenv import load_dotenv
 import google.generativeai as genai
+import pyttsx3
 
 from system_commands import handle_system_command
 
@@ -20,18 +21,21 @@ class AuraAssistant:
     # ----------------------------
     def _setup_gemini(self):
         if not GEMINI_API_KEY:
-            print("WARNING: GEMINI_API_KEY not found.")
+            print("WARNING: GEMINI_API_KEY not found in .env file.")
             return
 
         try:
             genai.configure(api_key=GEMINI_API_KEY)
 
-            # ⭐ CORRECT MODEL NAME for google-generativeai==0.5.2
-            self.model = genai.GenerativeModel("models/gemini-1.5-flash")
+            # ⭐ CORRECT MODEL NAME for latest google-generativeai API
+            self.model = genai.GenerativeModel("gemini-2.0-flash")
 
-            print("Gemini model loaded successfully.")
+            print("✓ Gemini model loaded successfully.")
+        except ValueError as e:
+            print(f"❌ Invalid API Key: {e}")
+            self.model = None
         except Exception as e:
-            print("Error loading Gemini model:", e)
+            print(f"❌ Error loading Gemini model: {type(e).__name__}: {e}")
             self.model = None
 
     # ----------------------------
@@ -45,6 +49,8 @@ class AuraAssistant:
         except Exception as e:
             print("TTS error:", e)
 
+
+    
     # ----------------------------
     # MAIN PROCESS FUNCTION
     # ----------------------------
@@ -82,9 +88,56 @@ class AuraAssistant:
             if not reply:
                 reply = "Gemini se response nahi mila."
 
+        except ValueError as e:
+            print(f"❌ Gemini API ValueError: {e}")
+            reply = "API key mein problem hai."
         except Exception as e:
-            print("Gemini API Error:", e)
+            print(f"❌ Gemini API Error: {type(e).__name__}: {e}")
             reply = "Gemini se response nahi mila."
 
         self.speak(reply)
         return reply
+
+
+def test_all_voices():
+    engine = pyttsx3.init()
+    voices = engine.getProperty('voices')
+    print("[TTS] Testing all voices...")
+    for v in voices:
+        print(f"Trying voice: {v.name} ({v.id})")
+        engine.setProperty('voice', voices[0].id)  # or try other voices
+        engine.setProperty('volume', 1.0)
+
+        engine.say(f"Testing voice: {v.name}")
+        engine.runAndWait()
+    print("[TTS] Done testing all voices.")
+import pyttsx3
+
+
+class TTSEngine:
+    def __init__(self):
+        self.engine = pyttsx3.init()
+
+        rate = self.engine.getProperty("rate")
+        self.engine.setProperty("rate", rate - 20)
+
+        voices = self.engine.getProperty('voices')
+        print(f"[TTS] Available voices:")
+        for v in voices:
+            print(f"ID: {v.id}, Name: {v.name}, Lang: {v.languages}")
+
+        if voices:
+            self.engine.setProperty('voice', voices[0].id)
+
+    def say(self, text: str):
+        if not text:
+            print("[TTS] Empty text, skipping.")
+            return
+
+        print(f"[TTS] Speaking: {text}")
+        try:
+            self.engine.say(text)
+            self.engine.runAndWait()
+        except Exception as e:
+            print("TTS Error:", e)
+import speech_recognition as sr
